@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#030914">
+<title>JARVIS — Personal AI</title>
+<style>
+:root{--cyan:#56e8ff;--blue:#178dff;--bg:#030914;--panel:rgba(7,25,48,.76);--line:rgba(63,198,255,.27);--muted:#8cb8d4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 20%,#09284c 0,#030914 58%,#01040b 100%);color:#d9f6ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+header{padding:22px 18px 8px;text-align:center}h1{margin:0;font-size:25px;letter-spacing:.35em;color:#b5f4ff;text-shadow:0 0 20px #20baff}header small{color:#64b9e5;letter-spacing:.18em}
+.wrap{max-width:760px;margin:auto;padding:10px 14px 30px}.statusrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#87c9e9;font-size:12px}.pill{border:1px solid var(--line);background:rgba(3,21,39,.65);padding:7px 10px;border-radius:99px}
+.orb-area{display:grid;place-items:center;padding:22px 0 16px}.orb{width:190px;height:190px;border-radius:50%;position:relative;display:grid;place-items:center;border:1px solid #2ccaff;box-shadow:0 0 20px #0b84d7, inset 0 0 26px #0a4f8e; background:radial-gradient(circle,#0a3156 0,#041325 62%,#020711 100%);animation:breath 3s ease-in-out infinite}
+.orb:before,.orb:after{content:"";position:absolute;border-radius:50%;inset:10px;border:1px dashed #46dfff;animation:spin 18s linear infinite}.orb:after{inset:24px;border:2px solid transparent;border-top-color:#4ee4ff;border-bottom-color:#157eff;animation:spin 5s linear infinite reverse}.orb span{font-size:19px;letter-spacing:.17em;text-shadow:0 0 15px #56e8ff}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes breath{50%{box-shadow:0 0 45px #0b84d7,inset 0 0 40px #0a4f8e}}
+.orb.listening{animation:breath .6s infinite}.sub{text-align:center;color:#78c9ed;font-size:12px;letter-spacing:.16em;min-height:20px}
+.card{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(8px);border-radius:17px;padding:14px;margin:12px 0;box-shadow:0 8px 24px #0005}.chat{height:240px;overflow:auto;display:flex;flex-direction:column;gap:10px}.msg{padding:10px 12px;border-radius:12px;max-width:92%;line-height:1.45;white-space:pre-wrap}.jarvis{align-self:flex-start;border:1px solid #165a88;background:#07213a}.user{align-self:flex-end;border:1px solid #1379ad;background:#083452}
+.row{display:flex;gap:8px}.row>*{min-width:0}.input{flex:1;width:100%;padding:13px;border-radius:12px;border:1px solid #287ba8;background:#041323;color:#e4faff;font-size:15px;outline:none}.btn{border:1px solid #27caff;background:linear-gradient(135deg,#06446d,#082343);color:#e2fbff;border-radius:12px;padding:12px 14px;font-weight:650}.btn:active{transform:scale(.98)}.btn.secondary{border-color:#245b83;background:#08192b}.btn.mic{min-width:54px}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.actions button{font-size:12px;padding:11px 6px}
+label{display:block;font-size:12px;color:#95c8e3;margin:9px 0 5px}select{background:#06172a;color:#ddf8ff;border:1px solid #286d98;border-radius:10px;padding:10px;width:100%}.muted{color:var(--muted);font-size:12px;line-height:1.5}.footer{text-align:center;color:#477e9c;font-size:11px;padding:15px}
+</style>
+</head>
+<body>
+<header><h1>J.A.R.V.I.S</h1><small>PERSONAL ASSISTANT INTERFACE</small></header>
+<div class="wrap">
+<div class="statusrow"><span class="pill" id="state">● SYSTEM READY</span><span class="pill" id="clock">--:--:--</span><span class="pill">LOCAL UI</span></div>
+<div class="orb-area"><div class="orb" id="orb"><span>JARVIS</span></div></div>
+<div class="sub" id="orbstatus">AWAITING INPUT</div>
+<div class="card"><div class="chat" id="chat"><div class="msg jarvis">Hello. JARVIS interface initialized. I can answer basic commands locally, speak responses, and optionally connect to a compatible local AI endpoint.</div></div>
+<div class="row" style="margin-top:10px"><input id="text" class="input" placeholder="Message JARVIS…" autocomplete="off"><button class="btn" id="send">SEND</button><button class="btn mic" id="mic" title="Voice input">🎙</button></div></div>
+<div class="card"><div class="actions"><button class="btn secondary" id="timebtn">🕒 TIME</button><button class="btn secondary" id="datebtn">📅 DATE</button><button class="btn secondary" id="helpbtn">❔ HELP</button></div></div>
+<div class="card"><strong>Assistant settings</strong>
+<label for="voice">Speech voice</label><select id="voice"><option value="">Default voice</option></select>
+<label for="speech">Speak replies</label><select id="speech"><option value="on">On</option><option value="off">Off</option></select>
+<label for="endpoint">Optional local AI API URL</label><input class="input" id="endpoint" style="width:100%" placeholder="e.g. http://127.0.0.1:port/v1/chat/completions">
+<p class="muted">The endpoint is optional. This interface does not automatically connect to PocketPal: configure an endpoint only if your PocketPal version exposes a compatible local API. Without it, built-in commands work and other questions receive a demo/offline fallback.</p>
+<button class="btn secondary" id="save" style="width:100%">SAVE SETTINGS</button>
+</div>
+<div class="footer">JARVIS prototype • Browser-based • Not a native Android assistant</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function tick(){ $('clock').textContent=new Date().toLocaleTimeString(); } tick();setInterval(tick,1000);
+function add(text,who='jarvis'){let el=document.createElement('div');el.className='msg '+who;el.textContent=text;$('chat').appendChild(el);$('chat').scrollTop=$('chat').scrollHeight;}
+function say(text){if($('speech').value==='off'||!window.speechSynthesis)return;window.speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);let voices=speechSynthesis.getVoices();let chosen=voices.find(v=>v.name===$('voice').value);if(chosen)u.voice=chosen;u.lang='en-US';speechSynthesis.speak(u);}
+function setStatus(s){$('state').textContent='● '+s;$('orbstatus').textContent=s;}
+function localAnswer(q){let s=q.toLowerCase();
+if(/\b(time|clock)\b/.test(s))return 'The time is '+new Date().toLocaleTimeString()+'.';
+if(/\b(date|day|today)\b/.test(s))return 'Today is '+new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'.';
+if(/\b(hello|hi|hey)\b/.test(s))return 'Hello. I am JARVIS, ready to assist.';
+if(/\b(your name|who are you)\b/.test(s))return 'I am JARVIS, your personal assistant interface.';
+if(/\b(help|commands)\b/.test(s))return 'Try: hello, what time is it, what is today’s date, or ask a question. Voice input uses your browser speech recognition if supported.';
+if(/\b(open (youtube|google|whatsapp|settings))\b/.test(s)){let app=s.match(/open (youtube|google|whatsapp|settings)/)[1];let urls={youtube:'https://youtube.com',google:'https://google.com',whatsapp:'https://wa.me/',settings:'intent://settings#Intent;scheme=android-app;end'};if(app==='settings')return 'Opening Android settings may not be supported by this browser. You can open Settings manually.';window.open(urls[app],'_blank');return 'Opening '+app+'.';}
+return null;}
+async function respond(q){if(!q.trim())return;add(q,'user');$('text').value='';setStatus('PROCESSING');$('orb').classList.remove('listening');let answer=localAnswer(q);
+if(answer===null&&$('endpoint').value.trim()){try{let r=await fetch($('endpoint').value.trim(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:'You are JARVIS, concise, polite, helpful.'},{role:'user',content:q}],temperature:.7})});if(!r.ok)throw new Error('HTTP '+r.status);let data=await r.json();answer=data.choices?.[0]?.message?.content||data.response||JSON.stringify(data);}catch(e){answer='I could not connect to that local AI endpoint. Check the address and whether the local AI server is running. For now I can answer built-in commands.';}}
+if(answer===null)answer='I received your question. My offline AI connection is not configured yet. You can connect a compatible local API in Settings, or continue with built-in commands.';
+add(answer);say(answer);setStatus('READY');}
+$('send').onclick=()=>respond($('text').value);$('text').addEventListener('keydown',e=>{if(e.key==='Enter')respond($('text').value);});
+$('timebtn').onclick=()=>respond('What time is it?');$('datebtn').onclick=()=>respond('What is today’s date?');$('helpbtn').onclick=()=>respond('Help');
+$('mic').onclick=()=>{let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){add('Speech recognition is not available in this browser. Try Chrome and check microphone permission.');return;}let rec=new SR();rec.lang='en-US';rec.interimResults=false;rec.onstart=()=>{$('orb').classList.add('listening');setStatus('LISTENING');};rec.onresult=e=>respond(e.results[0][0].transcript);rec.onerror=e=>{add('Microphone error: '+e.error);setStatus('READY');$('orb').classList.remove('listening');};rec.onend=()=>{$('orb').classList.remove('listening');if($('state').textContent.includes('LISTENING'))setStatus('READY');};rec.start();};
+function populateVoices(){let list=speechSynthesis.getVoices();let sel=$('voice');let old=sel.value;sel.innerHTML='<option value="">Default voice</option>';list.forEach(v=>{let o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.appendChild(o)});sel.value=old;}
+if(window.speechSynthesis){populateVoices();speechSynthesis.onvoiceschanged=populateVoices;}
+$('save').onclick=()=>{try{localStorage.setItem('jarvis_endpoint',$('endpoint').value);localStorage.setItem('jarvis_voice',$('voice').value);localStorage.setItem('jarvis_speech',$('speech').value);add('Settings saved on this device.','jarvis');}catch(e){add('Could not save settings in this browser.');}};
+try{$('endpoint').value=localStorage.getItem('jarvis_endpoint')||'';$('speech').value=localStorage.getItem('jarvis_speech')||'on';}catch(e){}
+</script>
+</body></html>
